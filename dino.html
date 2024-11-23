@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Birthday Game</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f0f8ff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+    canvas {
+      border: 2px solid #333;
+      background: #dff9fb;
+    }
+    .message {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 2rem;
+      font-weight: bold;
+      color: #333;
+      text-align: center;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+  <div id="message" class="message"></div>
+  <script>
+    // Set up the canvas
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Adjust canvas to fit the screen
+    const resizeCanvas = () => {
+      canvas.width = window.innerWidth * 0.9;
+      canvas.height = window.innerHeight * 0.6;
+    };
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    // Game variables
+    let player = { x: 50, y: canvas.height - 50, width: 30, height: 30, dy: 0, jumping: false };
+    let obstacles = [];
+    let gameSpeed = 5;
+    let gravity = 0.6;
+    let score = 0;
+    let isGameOver = false;
+
+    // Game loop
+    function gameLoop() {
+      if (isGameOver) return;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw player
+      ctx.fillStyle = '#ff6b6b';
+      ctx.fillRect(player.x, player.y, player.width, player.height);
+
+      // Update player position
+      player.y += player.dy;
+      if (player.jumping) player.dy += gravity;
+
+      if (player.y >= canvas.height - 50) {
+        player.y = canvas.height - 50;
+        player.jumping = false;
+        player.dy = 0;
+      }
+
+      // Draw and move obstacles
+      ctx.fillStyle = '#130f40';
+      for (let i = 0; i < obstacles.length; i++) {
+        const obs = obstacles[i];
+        obs.x -= gameSpeed;
+        ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+
+        // Check collision
+        if (
+          player.x < obs.x + obs.width &&
+          player.x + player.width > obs.x &&
+          player.y < obs.y + obs.height &&
+          player.y + player.height > obs.y
+        ) {
+          gameOver("Happy Birthday, Loser!");
+        }
+
+        // Remove off-screen obstacles
+        if (obs.x + obs.width < 0) {
+          obstacles.splice(i, 1);
+          score += 1;
+
+          // Check for winning condition
+          if (score >= 10) {
+            gameOver("Happy Birthday, Lovey!");
+          }
+        }
+      }
+
+      // Add new obstacles
+      if (Math.random() < 0.02) {
+        obstacles.push({ x: canvas.width, y: canvas.height - 50, width: 20, height: 20 });
+      }
+
+      // Display score
+      ctx.fillStyle = '#333';
+      ctx.font = '20px Arial';
+      ctx.fillText(`Score: ${score}`, 10, 30);
+
+      // Loop the game
+      requestAnimationFrame(gameLoop);
+    }
+
+    // Game over logic
+    function gameOver(message) {
+      isGameOver = true;
+      document.getElementById('message').innerText = message;
+      document.getElementById('message').style.display = 'block';
+    }
+
+    // Event listener for jumping (keyboard)
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' && !player.jumping) {
+        player.dy = -12;
+        player.jumping = true;
+      }
+    });
+
+    // Event listener for jumping (touch)
+    canvas.addEventListener('touchstart', () => {
+      if (!player.jumping) {
+        player.dy = -12;
+        player.jumping = true;
+      }
+    });
+
+    // Start the game
+    gameLoop();
+  </script>
+</body>
+</html>
